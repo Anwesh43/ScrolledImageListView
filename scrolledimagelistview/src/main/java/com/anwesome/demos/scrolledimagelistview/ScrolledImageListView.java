@@ -1,5 +1,7 @@
 package com.anwesome.demos.scrolledimagelistview;
 
+import android.animation.Animator;
+import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -21,10 +23,23 @@ public class ScrolledImageListView extends ViewGroup{
     private ImageView mImageView;
     private Bitmap bitmap;
     private ListView listView;
+    private boolean scrolling = false;
     private boolean imageAdded = false;
     private OverlayView overlayView;
-    private int w=0,h=0,initH = 0;
-    private float finalX,finalY;
+    private int w=0,h=0;
+    private ValueAnimator animator;
+    private AnimatorAdapter onEndAdapter = new AnimatorAdapter(){
+        public void onAnimationEnd(Animator animator) {
+            if(overlayView!=null) {
+                overlayView.setVisibility(INVISIBLE);
+            }
+        }
+    };
+    private AnimatorAdapter animatorAdapter = new AnimatorAdapter(){
+        public void onAnimationUpdate(ValueAnimator valueAnimator) {
+            translateViews((float)valueAnimator.getAnimatedValue());
+        }
+    };
     private boolean measured = false,laidOut = false;
     private LinearLayout linearLayout;
     private GestureDetector gestureDetector;
@@ -63,7 +78,7 @@ public class ScrolledImageListView extends ViewGroup{
         Point size = new Point();
         display.getRealSize(size);
         w = size.x;
-        h = size.y;
+        h = (size.y*19)/20;
 
         if(!measured)  {
             addView(overlayView,new LayoutParams(w,h));
@@ -112,13 +127,16 @@ public class ScrolledImageListView extends ViewGroup{
         }
     }
     private class ScrollGestureListener extends GestureDetector.SimpleOnGestureListener {
-        private float xGap,yGap;
+        private float xGap,yGap,y;
         private boolean downAllowed = true;
         public boolean onDown(MotionEvent event) {
             float x = event.getX(),y = event.getY();
             if(x >mImageView.getX() && x<mImageView.getX()+mImageView.getMeasuredWidth() && y>mImageView.getY() && y<mImageView.getY()+mImageView.getMeasuredHeight()) {
                 xGap = x-mImageView.getX();
                 yGap = y-mImageView.getY();
+                if(overlayView.getVisibility() == INVISIBLE) {
+                    overlayView.setVisibility(VISIBLE);
+                }
             }
             return true;
         }
@@ -128,15 +146,40 @@ public class ScrolledImageListView extends ViewGroup{
         public boolean onScroll(MotionEvent e1,MotionEvent e2,float velx,float vely) {
             if (Math.abs(vely) > Math.abs(velx)) {
                 if(e2!=null) {
-                    float y = e2.getY()-yGap;
+                    scrolling = true;
+                    y = e2.getY()-yGap;
                     if(y>2*h/3 && e2.getY()>e1.getY()) {
                         y = 2*h/3;
-
+                        scrolling = false;
+                        if(overlayView.getVisibility() == VISIBLE) {
+                            overlayView.setVisibility(INVISIBLE);
+                        }
                     }
                     if(y<0  && e2.getY()<e1.getY()) {
                         y = 0;
+                        scrolling = false;
                     }
                     translateViews(y);
+                }
+            }
+            return true;
+        }
+        public boolean onFling(MotionEvent e1,MotionEvent e2,float velx,float vely) {
+            if (Math.abs(vely) > Math.abs(velx) && e2!=null) {
+                boolean condition = false;
+                if(e2.getY()>e1.getY()) {
+                    animator = ValueAnimator.ofFloat(y,2*h/3);
+                    condition = true;
+                }
+                else if(e2.getY()<e1.getY()) {
+                    animator = ValueAnimator.ofFloat(y,0);
+                    condition = true;
+                }
+                if(condition) {
+                    animator.addListener(onEndAdapter);
+                    animator.addUpdateListener(animatorAdapter);
+                    animator.setDuration(200);
+                    animator.start();
                 }
             }
             return true;
