@@ -24,6 +24,7 @@ public class ScrolledImageListView extends ViewGroup{
     private boolean imageAdded = false;
     private OverlayView overlayView;
     private int w=0,h=0,initH = 0;
+    private float finalX,finalY;
     private boolean measured = false,laidOut = false;
     private LinearLayout linearLayout;
     private GestureDetector gestureDetector;
@@ -127,13 +128,15 @@ public class ScrolledImageListView extends ViewGroup{
         public boolean onScroll(MotionEvent e1,MotionEvent e2,float velx,float vely) {
             if (Math.abs(vely) > Math.abs(velx)) {
                 if(e2!=null) {
-                    if(mImageView.getY()>=7*h/8 && downAllowed && e2.getY()>e1.getY()) {
-                        return true;
+                    float y = e2.getY()-yGap;
+                    if(y>2*h/3 && e2.getY()>e1.getY()) {
+                        y = 2*h/3;
+
                     }
-                    if(mImageView.getY()<0 && !downAllowed && e2.getY()<e1.getY()) {
-                        return false;
+                    if(y<0  && e2.getY()<e1.getY()) {
+                        y = 0;
                     }
-                    translateViews(e2.getY()-yGap);
+                    translateViews(y);
                 }
             }
             return true;
