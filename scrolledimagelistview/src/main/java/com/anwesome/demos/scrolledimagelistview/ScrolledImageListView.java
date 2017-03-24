@@ -3,6 +3,7 @@ package com.anwesome.demos.scrolledimagelistview;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.Point;
 import android.view.Display;
 import android.view.GestureDetector;
@@ -10,6 +11,8 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ListView;
 
 /**
  * Created by anweshmishra on 24/03/17.
@@ -17,9 +20,12 @@ import android.widget.ImageView;
 public class ScrolledImageListView extends ViewGroup{
     private ImageView mImageView;
     private Bitmap bitmap;
+    private ListView listView;
+    private boolean imageAdded = false;
     private OverlayView overlayView;
-    private int w=0,h=0;
+    private int w=0,h=0,initH = 0;
     private boolean measured = false,laidOut = false;
+    private LinearLayout linearLayout;
     private GestureDetector gestureDetector;
     private ScrollGestureListener scrollGestureListener = new ScrollGestureListener();
     public ScrolledImageListView(Context context) {
@@ -27,13 +33,16 @@ public class ScrolledImageListView extends ViewGroup{
         gestureDetector = new GestureDetector(context,scrollGestureListener);
         mImageView = new ImageView(context);
         overlayView = new OverlayView(context);
+        listView = new ListView(context);
+        linearLayout = new LinearLayout(context);
     }
     private void setBitmap(Bitmap bitmap) {
-        if(bitmap!=null) {
+        if(this.bitmap == null) {
             this.bitmap = bitmap;
-            if(measured) {
+            if(measured && !imageAdded) {
                 addImageView();
                 requestLayout();
+                imageAdded = true;
             }
 
         }
@@ -44,9 +53,9 @@ public class ScrolledImageListView extends ViewGroup{
         activity.addContentView(scrolledImageListView,new LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.MATCH_PARENT));
     }
     private void addImageView() {
-        bitmap = Bitmap.createScaledBitmap(bitmap,w,h/4,true);
+        bitmap = Bitmap.createScaledBitmap(bitmap,w,h/3,true);
         mImageView.setImageBitmap(bitmap);
-        addView(mImageView,new LayoutParams(w,h/4));
+        addView(mImageView,new LayoutParams(w,h/3));
     }
     public void onMeasure(int wspec,int hspec) {
         Display display = getDisplay();
@@ -54,12 +63,16 @@ public class ScrolledImageListView extends ViewGroup{
         display.getRealSize(size);
         w = size.x;
         h = size.y;
+
         if(!measured)  {
             addView(overlayView,new LayoutParams(w,h));
-            if(bitmap!=null) {
-                addView(mImageView,new LayoutParams(w,h/4));
+            if(bitmap!=null && !imageAdded) {
                 addImageView();
+                imageAdded = true;
             }
+            addView(linearLayout,new LayoutParams(w,2*h/3));
+            linearLayout.setBackgroundColor(Color.WHITE);
+            linearLayout.addView(listView,new LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.MATCH_PARENT));
             measured = true;
         }
         for(int i = 0;i<getChildCount();i++) {
@@ -80,14 +93,16 @@ public class ScrolledImageListView extends ViewGroup{
             y+=view.getMeasuredHeight();
         }
     }
-    public void translateViews(float x,float y) {
+    public void translateViews(float y) {
         float yGap = y-mImageView.getY();
-        mImageView.setX(x);
-        mImageView.setY(y);
-        float wImage = w-x;
-        float yFinal = h-h/8;
-        mImageView.setScaleX(wImage/w);
-        mImageView.setScaleY(y/yFinal);
+        float yFinal = h-h/6;
+        float scale = (y)/(yFinal);
+        float sizeScale = 1-0.5f*scale;
+        mImageView.setScaleX(sizeScale);
+        mImageView.setScaleY(sizeScale);
+        float offsetX = (1-sizeScale)*mImageView.getMeasuredWidth()/2,offsetY = (1-sizeScale)*mImageView.getMeasuredHeight()/2;
+        mImageView.setX(w-(sizeScale*mImageView.getMeasuredWidth()+offsetX));
+        mImageView.setY(linearLayout.getY()+yGap-(sizeScale*mImageView.getMeasuredHeight()+offsetY));
         for(int i=0;i<getChildCount();i++) {
             View view = getChildAt(i);
             if(!(view instanceof ImageView || view instanceof OverlayView)) {
@@ -96,14 +111,13 @@ public class ScrolledImageListView extends ViewGroup{
         }
     }
     private class ScrollGestureListener extends GestureDetector.SimpleOnGestureListener {
-        private int time = 0;private float xGap,yGap;
+        private float xGap,yGap;
         private boolean downAllowed = true;
         public boolean onDown(MotionEvent event) {
             float x = event.getX(),y = event.getY();
             if(x >mImageView.getX() && x<mImageView.getX()+mImageView.getMeasuredWidth() && y>mImageView.getY() && y<mImageView.getY()+mImageView.getMeasuredHeight()) {
                 xGap = x-mImageView.getX();
                 yGap = y-mImageView.getY();
-                time = 0;
             }
             return true;
         }
@@ -119,8 +133,7 @@ public class ScrolledImageListView extends ViewGroup{
                     if(mImageView.getY()<0 && !downAllowed && e2.getY()<e1.getY()) {
                         return false;
                     }
-                    translateViews(e2.getX()-xGap,e2.getY()-yGap);
-                    time++;
+                    translateViews(e2.getY()-yGap);
                 }
             }
             return true;
