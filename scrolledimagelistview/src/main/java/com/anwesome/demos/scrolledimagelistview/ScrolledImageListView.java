@@ -15,11 +15,13 @@ import android.widget.ImageView;
 public class ScrolledImageListView extends ViewGroup{
     private ImageView mImageView;
     private Bitmap bitmap;
+    private OverlayView overlayView;
     private int w=0,h=0;
     private boolean measured = false,laidOut = false;
     public ScrolledImageListView(Context context) {
         super(context);
         mImageView = new ImageView(context);
+        overlayView = new OverlayView(context);
     }
     public void setBitmap(Bitmap bitmap) {
         if(bitmap!=null) {
@@ -43,6 +45,7 @@ public class ScrolledImageListView extends ViewGroup{
         w = size.x;
         h = size.y;
         if(!measured)  {
+            addView(overlayView,new LayoutParams(w,h));
             if(bitmap!=null) {
                 addView(mImageView,new LayoutParams(w,h/4));
                 addImageView();
@@ -59,6 +62,10 @@ public class ScrolledImageListView extends ViewGroup{
         int y = 0;
         for(int i=0;i<getChildCount();i++) {
             View view = getChildAt(i);
+            if(view instanceof OverlayView) {
+                view.layout(0,0,w,h);
+                continue;
+            }
             view.layout(0,y,w,y+view.getMeasuredHeight());
             y+=view.getMeasuredHeight();
         }
