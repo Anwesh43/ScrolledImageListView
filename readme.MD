@@ -1,6 +1,6 @@
 # ScrolledImageListView
 
-## An android library to create scrolling like that of youtube.
+## An android library to create scrolling effect like that of youtube.
 
 ## Usage
 
