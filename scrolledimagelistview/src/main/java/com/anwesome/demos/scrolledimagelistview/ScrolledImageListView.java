@@ -1,5 +1,6 @@
 package com.anwesome.demos.scrolledimagelistview;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Point;
@@ -55,6 +56,11 @@ public class ScrolledImageListView extends ViewGroup{
         setMeasuredDimension(w,h);
     }
     public void onLayout(boolean changed,int a,int b,int w,int h){
-
+        int y = 0;
+        for(int i=0;i<getChildCount();i++) {
+            View view = getChildAt(i);
+            view.layout(0,y,w,y+view.getMeasuredHeight());
+            y+=view.getMeasuredHeight();
+        }
     }
 }
