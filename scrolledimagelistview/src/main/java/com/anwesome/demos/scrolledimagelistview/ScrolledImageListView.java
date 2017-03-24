@@ -38,7 +38,7 @@ public class ScrolledImageListView extends ViewGroup{
 
         }
     }
-    private static  void show(Activity activity,Bitmap bitmap) {
+    public static  void show(Activity activity,Bitmap bitmap) {
         ScrolledImageListView scrolledImageListView = new ScrolledImageListView(activity);
         scrolledImageListView.setBitmap(bitmap);
         activity.addContentView(scrolledImageListView,new LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.MATCH_PARENT));
