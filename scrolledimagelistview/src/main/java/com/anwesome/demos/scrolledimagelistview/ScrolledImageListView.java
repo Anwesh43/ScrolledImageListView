@@ -1,5 +1,6 @@
 package com.anwesome.demos.scrolledimagelistview;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Point;
@@ -27,7 +28,7 @@ public class ScrolledImageListView extends ViewGroup{
         mImageView = new ImageView(context);
         overlayView = new OverlayView(context);
     }
-    public void setBitmap(Bitmap bitmap) {
+    private void setBitmap(Bitmap bitmap) {
         if(bitmap!=null) {
             this.bitmap = bitmap;
             if(measured) {
@@ -36,6 +37,11 @@ public class ScrolledImageListView extends ViewGroup{
             }
 
         }
+    }
+    private static  void show(Activity activity,Bitmap bitmap) {
+        ScrolledImageListView scrolledImageListView = new ScrolledImageListView(activity);
+        scrolledImageListView.setBitmap(bitmap);
+        activity.addContentView(scrolledImageListView,new LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.MATCH_PARENT));
     }
     private void addImageView() {
         bitmap = Bitmap.createScaledBitmap(bitmap,w,h/4,true);
